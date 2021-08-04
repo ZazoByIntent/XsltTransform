@@ -3,6 +3,8 @@ using System.Text;
 using System.Xml;
 using System.Xml.Xsl;
 using System.IO;
+using System.Xml.Serialization;
+using System.Collections.Generic;
 
 namespace XslTransform
 {
@@ -21,6 +23,30 @@ namespace XslTransform
 
             return sw.GetStringBuilder().ToString();
         }
+
+        #region GenericTransform
+
+        public string VrniDokument<T>(List<T> aEntitetaCollection, string aXsltDatoteka)
+        {
+            StringWriter stringWriter = new StringWriter();
+            new XmlSerializer(typeof(List<T>)).Serialize(stringWriter, aEntitetaCollection);
+            XmlDocument xmlDocument = new XmlDocument();
+            xmlDocument.LoadXml(stringWriter.GetStringBuilder().ToString());
+            return new Transform().VrniHtmlDokument(xmlDocument, aXsltDatoteka);
+        }
+
+        private string VrniHtmlDokument(XmlDocument xmlDocument, string aXsltDatoteka)
+        {
+            using (var stringWriter = new StringWriter())
+            {
+                XslCompiledTransform xct = new XslCompiledTransform();
+                xct.Load(aXsltDatoteka, new XsltSettings(false, true), new XmlUrlResolver());
+                xct.Transform(xmlDocument, new XmlTextWriter(stringWriter));
+                return stringWriter.GetStringBuilder().ToString();
+            }
+        }
+
+        #endregion
 
 
         // public static string ImenikXslt = HttpContext.Current.Request.PhysicalApplicationPath + "Reports\\";
