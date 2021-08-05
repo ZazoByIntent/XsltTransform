@@ -3,13 +3,84 @@ using System.Text;
 using System.Xml;
 using System.Xml.Xsl;
 using System.IO;
-using System.Xml.Serialization;
 using System.Collections.Generic;
+using System.Xml.Serialization;
+using System.Xml.Linq;
 
 namespace XslTransform
 {
     public class Transform
-    {        
+    {
+        // public static string ImenikXslt = HttpContext.Current.Request.PhysicalApplicationPath + "Reports\\";
+        // string path = SessionHandler.ImenikXslt + KonstanteWEB.DOC_INSTALACIJE_NAROCILA_DOGODKI;
+        
+        
+        public string VrniDokument<T>(List<T> aEntitetaCollection, string aXsltDatoteka)
+        {
+            StringBuilder stringBuilder = new StringBuilder();
+            using (XmlWriter stringWriter = XmlWriter.Create(stringBuilder))
+                new XmlSerializer(typeof(List<T>)).Serialize(stringWriter, aEntitetaCollection);
+            return new Transform().VrniHtmlDokument(XDocument.Parse(stringBuilder.ToString()), aXsltDatoteka);
+        }
+
+        private string VrniHtmlDokument(XDocument aDocument, string aXsltDatoteka)
+        {
+            XslCompiledTransform xct = new XslCompiledTransform();
+            StringBuilder stringBuilder = new StringBuilder();
+            using (XmlWriter stringWriter = XmlWriter.Create(stringBuilder))
+            {
+                xct.Load(aXsltDatoteka, new XsltSettings(false, true), new XmlUrlResolver());
+                xct.Transform(aDocument.CreateReader(ReaderOptions.None), stringWriter);
+            }
+            return stringBuilder.ToString();
+        }
+        
+
+        /*
+        public string VrniDokument<T>(List<T> aEntitetaCollection, string aXsltDatoteka)
+        {
+            XmlSerializer ser = new XmlSerializer(typeof(List<T>));
+            StringBuilder sb = new StringBuilder();
+            StringWriter writer = new StringWriter(sb);
+            ser.Serialize(writer, aEntitetaCollection);
+            XmlDocument doc = new XmlDocument();
+            doc.LoadXml(sb.ToString());
+
+            return new Transform().VrniHtmlDokument(doc, aXsltDatoteka);         
+        }
+
+
+        private string VrniHtmlDokument(object aData, string aXsltDatoteka)
+        {
+
+            XmlSerializer ser = new XmlSerializer(aData.GetType());
+            StringBuilder sb = new StringBuilder();
+            StringWriter writer = new StringWriter(sb);
+            ser.Serialize(writer, aData);
+            XmlDocument doc = new XmlDocument();
+            doc.LoadXml(sb.ToString());
+
+
+            XsltSettings xslt_set = new XsltSettings();
+            xslt_set.EnableScript = true;
+
+            XslCompiledTransform xct = new XslCompiledTransform();
+            xct.Load(aXsltDatoteka, xslt_set, new XmlUrlResolver());
+
+
+            StringBuilder sb2 = new StringBuilder();
+            StringWriter sw = new StringWriter(sb2);
+            XmlTextWriter tw = new XmlTextWriter(sw);
+
+            xct.Transform(doc, tw);
+            string Vsebina = sb2.ToString();
+            return Vsebina;
+        }
+        */
+        
+
+
+        /*
         public string VrniHtmlDokument(string aXmlDatoteka, string aXsltDatoteka)
         {
             XmlDocument xmlDoc = new XmlDocument();
@@ -23,34 +94,7 @@ namespace XslTransform
 
             return sw.GetStringBuilder().ToString();
         }
-
-        #region GenericTransform
-
-        public string VrniDokument<T>(List<T> aEntitetaCollection, string aXsltDatoteka)
-        {
-            StringWriter stringWriter = new StringWriter();
-            new XmlSerializer(typeof(List<T>)).Serialize(stringWriter, aEntitetaCollection);
-            XmlDocument xmlDocument = new XmlDocument();
-            xmlDocument.LoadXml(stringWriter.GetStringBuilder().ToString());
-            return new Transform().VrniHtmlDokument(xmlDocument, aXsltDatoteka);
-        }
-
-        private string VrniHtmlDokument(XmlDocument xmlDocument, string aXsltDatoteka)
-        {
-            using (var stringWriter = new StringWriter())
-            {
-                XslCompiledTransform xct = new XslCompiledTransform();
-                xct.Load(aXsltDatoteka, new XsltSettings(false, true), new XmlUrlResolver());
-                xct.Transform(xmlDocument, new XmlTextWriter(stringWriter));
-                return stringWriter.GetStringBuilder().ToString();
-            }
-        }
-
-        #endregion
-
-
-        // public static string ImenikXslt = HttpContext.Current.Request.PhysicalApplicationPath + "Reports\\";
-        // string path = SessionHandler.ImenikXslt + KonstanteWEB.DOC_INSTALACIJE_NAROCILA_DOGODKI;
+        */
 
         /*
         public static List<string> XmlFileToString(List<string> aEntitetaCollection)
